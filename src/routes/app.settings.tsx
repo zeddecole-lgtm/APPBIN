@@ -1,67 +1,80 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { KeyRound, LogOut } from "lucide-react";
+import { ChevronDown, Download, KeyRound, Lock, RotateCcw } from "lucide-react";
 import { PageHeader } from "@/components/ui-kit";
-import { checkSecret, setCustomHash, setUnlocked, sha } from "@/lib/gate";
+import { checkSecret, getCustomHash, setCustomHash, setUnlocked, sha } from "@/lib/gate";
+import { useInstall } from "@/lib/install";
 
 export const Route = createFileRoute("/app/settings")({
-  head: () => ({
-    meta: [
-      { title: "Settings — Digi Mirror" },
-      { name: "description", content: "Change the secret answer that unlocks Digi Mirror." },
-      { property: "og:title", content: "Settings — Digi Mirror" },
-      { property: "og:description", content: "Change the secret answer that unlocks Digi Mirror." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Settings — Dodo" }] }),
   component: SettingsPage,
 });
 
+function Row({ icon: Icon, label, hint, onClick, tone, right }: { icon: typeof Lock; label: string; hint?: string; onClick?: () => void; tone?: string; right?: React.ReactNode }) {
+  return (
+    <button onClick={onClick} className={`flex w-full items-center gap-3.5 px-4 py-3.5 text-left active:bg-secondary ${tone ?? ""}`}>
+      <span className="grid size-9 place-items-center rounded-xl bg-muted"><Icon className="size-[18px]" /></span>
+      <span className="flex-1"><span className="block text-[15px] font-semibold">{label}</span>{hint && <span className="text-xs text-muted-foreground">{hint}</span>}</span>
+      {right}
+    </button>
+  );
+}
+
 function SettingsPage() {
   const nav = useNavigate();
+  const install = useInstall();
+  const [open, setOpen] = useState(false);
   const [cur, setCur] = useState("");
   const [next, setNext] = useState("");
   const [again, setAgain] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
-  const field = "w-full rounded-xl border border-input bg-muted px-4 py-3 text-sm outline-none focus:border-ring";
-
-  const verifyCurrent = () => checkSecret(cur);
+  const custom = typeof window !== "undefined" && !!getCustomHash();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (next.length < 6) return setMsg({ ok: false, t: "The new password needs at least 6 characters." });
-    if (next !== again) return setMsg({ ok: false, t: "The two new passwords don't match." });
-    if (next.trim() === "2") return setMsg({ ok: false, t: "\"2\" is reserved for the game." });
-    if (!(await verifyCurrent())) return setMsg({ ok: false, t: "Current password is wrong." });
+    if (next.length < 6) return setMsg({ ok: false, t: "Use at least 6 characters." });
+    if (next !== again) return setMsg({ ok: false, t: "The new answers don't match." });
+    if (next.trim() === "2") return setMsg({ ok: false, t: "“2” opens the game, so it can't be your secret." });
+    if (!(await checkSecret(cur))) return setMsg({ ok: false, t: "Current answer is wrong." });
     setCustomHash(await sha(next));
     setCur(""); setNext(""); setAgain("");
-    setMsg({ ok: true, t: "Password changed on this device." });
+    setMsg({ ok: true, t: "Secret answer changed on this phone." });
   }
 
-  async function reset() {
-    if (!(await verifyCurrent())) return setMsg({ ok: false, t: "Enter your current password first." });
-    setCustomHash(null);
-    setCur("");
-    setMsg({ ok: true, t: "Back to your original password." });
+  async function restore() {
+    if (!cur) { setOpen(true); return setMsg({ ok: false, t: "Type your current answer first, then tap Restore." }); }
+    if (!(await checkSecret(cur))) return setMsg({ ok: false, t: "Current answer is wrong." });
+    setCustomHash(null); setCur("");
+    setMsg({ ok: true, t: "Original secret answer is back." });
   }
 
   return (
     <>
       <PageHeader title="Settings" />
-      <form onSubmit={submit} className="surface space-y-3 p-5">
-        <div className="flex items-center gap-3"><KeyRound className="size-5 text-primary" /><h2 className="text-base font-semibold">Change secret password</h2></div>
-        <p className="text-xs text-muted-foreground">This is the answer you type under "1 + 1 = ?" to open the real app.</p>
-        <input type="password" value={cur} onChange={(e) => setCur(e.target.value)} placeholder="Current password" className={field} />
-        <input type="password" value={next} onChange={(e) => setNext(e.target.value)} placeholder="New password" className={field} />
-        <input type="password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder="Repeat new password" className={field} />
-        {msg && <p className={`text-xs ${msg.ok ? "text-success" : "text-destructive"}`}>{msg.t}</p>}
-        <button className="bg-gold w-full rounded-xl py-3 text-sm font-bold text-primary-foreground">Save new password</button>
-        <button type="button" onClick={reset} className="w-full py-2 text-xs font-semibold text-muted-foreground">Restore original password</button>
-      </form>
-      <button onClick={() => { setUnlocked(false); nav({ to: "/", replace: true }); }}
-        className="surface mt-4 flex w-full items-center justify-between p-4 text-sm font-semibold text-destructive">
-        Lock app <LogOut className="size-4" />
-      </button>
-      <p className="mt-6 text-center text-[11px] text-muted-foreground">Works offline · no API · your password stays on this device</p>
+
+      <h2 className="mb-2 px-1 font-sans text-sm font-bold text-muted-foreground">Secret answer</h2>
+      <div className="group-list">
+        <Row icon={KeyRound} label="Change secret answer" hint="What you type under 1 + 1 to get in" onClick={() => setOpen((o) => !o)}
+          right={<ChevronDown className={`size-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />} />
+        {open && (
+          <form onSubmit={submit} className="space-y-2.5 p-4">
+            <input type="password" value={cur} onChange={(e) => setCur(e.target.value)} placeholder="Current answer" autoComplete="current-password" className="field" />
+            <input type="password" value={next} onChange={(e) => setNext(e.target.value)} placeholder="New answer" autoComplete="new-password" className="field" />
+            <input type="password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder="New answer again" autoComplete="new-password" className="field" />
+            {msg && <p className={`px-1 text-sm font-semibold ${msg.ok ? "text-success" : "text-destructive"}`}>{msg.t}</p>}
+            <button className="btn-gold w-full py-3.5">Save new answer</button>
+          </form>
+        )}
+        {custom && <Row icon={RotateCcw} label="Restore original answer" onClick={restore} />}
+      </div>
+
+      <h2 className="mb-2 mt-7 px-1 font-sans text-sm font-bold text-muted-foreground">This phone</h2>
+      <div className="group-list">
+        {install.available && <Row icon={Download} label="Install on home screen" hint="Shows up as Dodo with the worm icon" onClick={install.install} />}
+        <Row icon={Lock} label="Lock now" hint="Back to the 1 + 1 screen" tone="text-destructive" onClick={() => { setUnlocked(false); nav({ to: "/", replace: true }); }} />
+      </div>
+
+      <p className="mt-8 px-6 text-center text-xs leading-relaxed text-muted-foreground">Nothing leaves this phone. Your answer is checked here, without any server or API.</p>
     </>
   );
 }
