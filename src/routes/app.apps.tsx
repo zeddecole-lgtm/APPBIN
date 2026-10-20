@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Hexagon, Minus, Plus, Send, X } from "lucide-react";
-import { PageHeader } from "@/components/ui-kit";
+import { Minus, Plus, X } from "lucide-react";
+import { AppIcon, PageHeader } from "@/components/ui-kit";
 import { BINANCE_HOME, TELEGRAM, openSite } from "@/lib/links";
 
 export const Route = createFileRoute("/app/apps")({
@@ -11,10 +11,6 @@ export const Route = createFileRoute("/app/apps")({
 
 type App = { name: string; url: string };
 const KEY = "digi-mirror-apps";
-const PALETTE = ["#7C6CF2", "#2BB673", "#F2637E", "#F59E2B", "#20A4C9", "#B565E8", "#E8553D", "#4E7CF5"];
-const tint = (s: string) => PALETTE[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % PALETTE.length]!;
-const initials = (n: string) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
-
 function AppsPage() {
   const [apps, setApps] = useState<App[]>([]);
   const [editing, setEditing] = useState(false);
@@ -22,13 +18,10 @@ function AppsPage() {
   useEffect(() => { try { setApps(JSON.parse(localStorage.getItem(KEY) ?? "[]")); } catch { /* ignore */ } }, []);
   const save = (a: App[]) => { setApps(a); try { localStorage.setItem(KEY, JSON.stringify(a)); } catch { /* ignore */ } };
 
-  const Icon = ({ bg, children }: { bg: string; children: React.ReactNode }) => (
-    <span className="grid size-[66px] place-items-center rounded-[22px] font-display text-lg font-bold text-white shadow-[inset_0_-3px_0_rgb(0_0_0/0.15)]" style={{ background: bg }}>{children}</span>
-  );
   const Cell = ({ label, onClick, children, onRemove }: { label: string; onClick: () => void; children: React.ReactNode; onRemove?: () => void }) => (
-    <div className="relative flex flex-col items-center gap-2">
+    <div className="relative flex min-w-0 flex-col items-center gap-2">
       <button onClick={onClick} className="transition-transform active:scale-95" aria-label={`Open ${label}`}>{children}</button>
-      <span className="w-full truncate text-center text-[12.5px] font-semibold text-secondary-foreground">{label}</span>
+      <span className="w-full truncate text-center text-[0.8rem] font-semibold text-secondary-foreground">{label}</span>
       {editing && onRemove && (
         <button onClick={onRemove} aria-label={`Remove ${label}`}
           className="absolute -right-0.5 -top-1.5 grid size-6 place-items-center rounded-full bg-destructive text-white ring-4 ring-background"><Minus className="size-3.5" strokeWidth={3} /></button>
@@ -43,15 +36,15 @@ function AppsPage() {
       )} />
 
       <div className="grid grid-cols-4 gap-x-3 gap-y-6">
-        <Cell label="Binance" onClick={() => openSite(BINANCE_HOME)}><Icon bg="#F0B90B"><Hexagon className="size-7 text-[#1A1406]" strokeWidth={2.4} /></Icon></Cell>
-        <Cell label="Telegram" onClick={() => openSite(TELEGRAM)}><Icon bg="#2AABEE"><Send className="size-7" /></Icon></Cell>
+        <Cell label="Binance" onClick={() => openSite(BINANCE_HOME, "Binance")}><AppIcon url={BINANCE_HOME} name="Binance" /></Cell>
+        <Cell label="Telegram" onClick={() => openSite(TELEGRAM, "Telegram")}><AppIcon url={TELEGRAM} name="Telegram" /></Cell>
         {apps.map((a, i) => (
-          <Cell key={a.url + i} label={a.name} onClick={() => (editing ? undefined : openSite(a.url))} onRemove={() => save(apps.filter((_, j) => j !== i))}>
-            <Icon bg={tint(a.name)}>{initials(a.name)}</Icon>
+          <Cell key={a.url + i} label={a.name} onClick={() => (editing ? undefined : openSite(a.url, a.name))} onRemove={() => save(apps.filter((_, j) => j !== i))}>
+            <AppIcon url={a.url} name={a.name} />
           </Cell>
         ))}
         <Cell label="Add" onClick={() => setAdding(true)}>
-          <span className="grid size-[66px] place-items-center rounded-[22px] border-2 border-dashed border-white/15 text-muted-foreground"><Plus className="size-7" /></span>
+          <span className="grid size-[4.25rem] place-items-center rounded-[28%] border-2 border-dashed border-white/15 text-muted-foreground"><Plus className="size-7" /></span>
         </Cell>
       </div>
 

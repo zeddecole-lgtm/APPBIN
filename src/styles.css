@@ -79,7 +79,14 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { -webkit-tap-highlight-color: transparent; background: var(--background); }
+  html {
+    -webkit-tap-highlight-color: transparent;
+    background: var(--background);
+    /* Scales the whole interface with the phone's width: 16px on small phones, up to 19px on big ones. */
+    font-size: clamp(16px, 4.35vw, 19px);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   body {
     background-color: var(--background);
     color: var(--foreground);
@@ -161,6 +168,17 @@
 @utility surface { background-color: var(--card); border: 1px solid var(--border); border-radius: 22px; }
 @utility bg-gold { background: var(--primary); }
 
+/* Secret field: typed as text, shown as dots, so password managers leave it alone. */
+.secret { -webkit-text-security: disc; text-security: disc; letter-spacing: .12em; }
+.secret:placeholder-shown { letter-spacing: normal; }
+
+@keyframes launch-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes loading { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+@keyframes unlock { 0% { transform: none; opacity: 1; } 100% { transform: scale(1.08); opacity: 0; } }
+.launch-pop { animation: launch-pop .35s cubic-bezier(.2,.9,.3,1.3) both; }
+.loading-bar { animation: loading 1s ease-in-out infinite; }
+.unlock { animation: unlock .45s ease-in forwards; }
+
 /* Worm wiggle */
 @keyframes wiggle { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-10px) rotate(-4deg); } }
 @keyframes blink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
@@ -173,5 +191,5 @@
 .rise { animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
 .sheet-up { animation: sheet-up .28s cubic-bezier(.2,.8,.2,1); }
 @media (prefers-reduced-motion: reduce) {
-  .seg, .eye, .shake, .rise, .sheet-up { animation: none !important; }
+  .seg, .eye, .shake, .rise, .sheet-up, .launch-pop, .unlock { animation: none !important; }
 }

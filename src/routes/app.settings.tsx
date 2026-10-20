@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronDown, Download, KeyRound, Lock, RotateCcw } from "lucide-react";
-import { PageHeader } from "@/components/ui-kit";
+import { PageHeader, SecretInput } from "@/components/ui-kit";
 import { checkSecret, getCustomHash, setCustomHash, setUnlocked, sha } from "@/lib/gate";
 import { useInstall } from "@/lib/install";
 
@@ -14,7 +14,7 @@ function Row({ icon: Icon, label, hint, onClick, tone, right }: { icon: typeof L
   return (
     <button onClick={onClick} className={`flex w-full items-center gap-3.5 px-4 py-3.5 text-left active:bg-secondary ${tone ?? ""}`}>
       <span className="grid size-9 place-items-center rounded-xl bg-muted"><Icon className="size-[18px]" /></span>
-      <span className="flex-1"><span className="block text-[15px] font-semibold">{label}</span>{hint && <span className="text-xs text-muted-foreground">{hint}</span>}</span>
+      <span className="flex-1"><span className="block text-[1rem] font-semibold">{label}</span>{hint && <span className="text-xs text-muted-foreground">{hint}</span>}</span>
       {right}
     </button>
   );
@@ -30,8 +30,7 @@ function SettingsPage() {
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
   const custom = typeof window !== "undefined" && !!getCustomHash();
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit() {
     if (next.length < 6) return setMsg({ ok: false, t: "Use at least 6 characters." });
     if (next !== again) return setMsg({ ok: false, t: "The new answers don't match." });
     if (next.trim() === "2") return setMsg({ ok: false, t: "“2” opens the game, so it can't be your secret." });
@@ -57,13 +56,13 @@ function SettingsPage() {
         <Row icon={KeyRound} label="Change secret answer" hint="What you type under 1 + 1 to get in" onClick={() => setOpen((o) => !o)}
           right={<ChevronDown className={`size-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />} />
         {open && (
-          <form onSubmit={submit} className="space-y-2.5 p-4">
-            <input type="password" value={cur} onChange={(e) => setCur(e.target.value)} placeholder="Current answer" autoComplete="current-password" className="field" />
-            <input type="password" value={next} onChange={(e) => setNext(e.target.value)} placeholder="New answer" autoComplete="new-password" className="field" />
-            <input type="password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder="New answer again" autoComplete="new-password" className="field" />
+          <div className="space-y-2.5 p-4">
+            <SecretInput value={cur} onChange={setCur} placeholder="Current answer" className="field" />
+            <SecretInput value={next} onChange={setNext} placeholder="New answer" className="field" />
+            <SecretInput value={again} onChange={setAgain} onEnter={submit} placeholder="New answer again" className="field" />
             {msg && <p className={`px-1 text-sm font-semibold ${msg.ok ? "text-success" : "text-destructive"}`}>{msg.t}</p>}
-            <button className="btn-gold w-full py-3.5">Save new answer</button>
-          </form>
+            <button onClick={submit} className="btn-gold w-full py-3.5">Save new answer</button>
+          </div>
         )}
         {custom && <Row icon={RotateCcw} label="Restore original answer" onClick={restore} />}
       </div>

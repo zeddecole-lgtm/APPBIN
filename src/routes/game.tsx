@@ -81,7 +81,7 @@ function Game() {
 
   return (
     <main className="dodo min-h-dvh">
-      <div className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
+      <div className="mx-auto flex min-h-dvh max-w-[30rem] flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <Link to="/" aria-label="Back" className="dodo-key grid size-12 place-items-center"><ChevronLeft className="size-6" /></Link>
           <div className="flex gap-2 text-center">

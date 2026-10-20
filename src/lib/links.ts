@@ -14,5 +14,26 @@ export const BINANCE_LINKS = [
   { label: "History", icon: History, url: "https://www.binance.com/en/my/wallet/history/deposit-crypto" },
 ] as const;
 
-/** Open a website as it is, in a new window (a Chrome tab on top of the app on Android). */
-export const openSite = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
+/* ---- Launch state: a short "opening" screen, then the site loads in this same window ---- */
+type Launch = { name: string; url: string } | null;
+let launching: Launch = null;
+const subs = new Set<() => void>();
+export const subscribeLaunch = (f: () => void) => (subs.add(f), () => subs.delete(f));
+export const getLaunch = () => launching;
+
+/**
+ * Opens a website inside the app's own window (not a separate tab).
+ * Installed on Android, Chrome keeps it in the Dodo window with a small bar and an ✕ to come back.
+ */
+export function openSite(url: string, name?: string) {
+  launching = { url, name: name ?? new URL(url).hostname.replace(/^www\./, "") };
+  subs.forEach((f) => f());
+  setTimeout(() => window.location.assign(url), 450);
+}
+
+export const iconFor = (url: string) => {
+  let host = new URL(url).hostname;
+  if (host.endsWith("telegram.org")) host = "telegram.org";
+  if (host.endsWith("binance.com")) host = "binance.com";
+  return `https://icons.duckduckgo.com/ip3/${host}.ico`;
+};
